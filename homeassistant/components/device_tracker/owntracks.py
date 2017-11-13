@@ -255,7 +255,8 @@ class OwnTracksContext:
         # kwargs location is the beacon's configured lat/lon
         kwargs.pop('battery', None)
         for beacon in self.mobile_beacons_active[dev_id]:
-            kwargs['dev_id'] = "{}_{}".format(BEACON_DEV_ID, beacon)
+            
+            kwargs['dev_id'] = "{}_{}".format(BEACON_DEV_ID, beacon.replace('-','_'))
             kwargs['host_name'] = beacon
             yield from self.async_see(**kwargs)
 
