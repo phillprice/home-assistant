@@ -117,6 +117,16 @@ ICON_MAPPING_ACTIVITY_TYPES = {
 }
 
 
+##
+## @brief      { function_description }
+##
+## @param      hass            The hass
+## @param      config          The configuration
+## @param      add_entities    The add entities
+## @param      discovery_info  The discovery information
+##
+## @return     { description_of_the_return_value }
+##
 async def async_setup_platform(hass, config, add_entities,
                                discovery_info=None):
 
@@ -168,8 +178,18 @@ async def async_setup_platform(hass, config, add_entities,
     add_entities(sensors, True)
 
 
+##
+## @brief      Class for strava sensor.
+##
 class StravaSensor(Entity):
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self   The object
+    ## @param      typ    The typ
+    ## @param      field  The field
+    ##
     def __init__(self, typ, field):
         self._data = None
         self._type = typ
@@ -183,6 +203,13 @@ class StravaSensor(Entity):
             self._field = field
             self._subfield = None
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     async def async_update(self):
         try:
             await self._data.update(self.hass)
@@ -191,7 +218,13 @@ class StravaSensor(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
+        """
+        Return the state of the sensor.
+        
+        @param      self  The object
+        
+        @return     { description_of_the_return_value }
+        """
         from stravalib.model import ActivityTotals
         from units.quantity import Quantity
         from units import unit
@@ -210,6 +243,13 @@ class StravaSensor(Entity):
         else:
             return str(attr)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def unit_of_measurement(self):
         from stravalib.model import ActivityTotals
@@ -232,6 +272,13 @@ class StravaSensor(Entity):
         else:
             return None
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def icon(self):
         if self._field and self._field in ICON_MAPPING_FIELDS:
@@ -241,10 +288,24 @@ class StravaSensor(Entity):
         else:
             return ICON
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def available(self):
         return self._state is not None
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def unique_id(self):
         field = self._field
@@ -254,6 +315,13 @@ class StravaSensor(Entity):
         return 'strava_{}_{}_{}'.format(
             self._type, self._data.id, field)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def name_prefix(self):
         if self.available:
@@ -263,6 +331,13 @@ class StravaSensor(Entity):
                 self._type.replace('_', ' ').title(),
                 self._data.id)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def name(self):
         name = self.name_prefix
@@ -276,21 +351,52 @@ class StravaSensor(Entity):
 
 
 class StravaLastActivitySensor(StravaSensor):
-    """Representation of an Activity Sensor."""
+    """
+    Representation of an Activity Sensor.
+    """
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self        The object
+    ## @param      data        The data
+    ## @param      athlete_id  The athlete identifier
+    ## @param      field       The field
+    ##
     def __init__(self, data, athlete_id, field):
         super().__init__('last_activity', field)
 
         self._data = data.get_athlete(athlete_id)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def _state(self):
         return self._data.last_activity
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def name_prefix(self):
         return 'Last Activity '
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def device_state_attributes(self):
         return {
@@ -299,17 +405,41 @@ class StravaLastActivitySensor(StravaSensor):
 
 
 class StravaAthleteDetailsSensor(StravaSensor):
-    """Representation of an Athlete Sensor."""
+    """
+    Representation of an Athlete Sensor.
+    """
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self        The object
+    ## @param      data        The data
+    ## @param      athlete_id  The athlete identifier
+    ## @param      field       The field
+    ##
     def __init__(self, data, athlete_id, field):
         super().__init__('athlete', field)
 
         self._data = data.get_athlete(athlete_id)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def _state(self):
         return self._data.details
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def name_prefix(self):
         if self.available:
@@ -319,11 +449,25 @@ class StravaAthleteDetailsSensor(StravaSensor):
         else:
             return 'Athlete: '
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def entity_picture(self):
         if self.available:
             return self._data.details.profile
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def device_state_attributes(self):
         return {
@@ -331,17 +475,42 @@ class StravaAthleteDetailsSensor(StravaSensor):
         }
 
 
+##
+## @brief      Class for strava athlete statistics sensor.
+##
 class StravaAthleteStatsSensor(StravaSensor):
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self        The object
+    ## @param      data        The data
+    ## @param      athlete_id  The athlete identifier
+    ## @param      field       The field
+    ##
     def __init__(self, data, athlete_id, field):
         super().__init__('stats', field)
 
         self._data = data.get_athlete(athlete_id)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def _state(self):
         return self._data.stats
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def name_prefix(self):
         if self.available:
@@ -351,11 +520,25 @@ class StravaAthleteStatsSensor(StravaSensor):
         else:
             return 'Athlete: '
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def entity_picture(self):
         if self._data.details:
             return self._data.details.profile
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def device_state_attributes(self):
         return {
@@ -363,22 +546,54 @@ class StravaAthleteStatsSensor(StravaSensor):
         }
 
 
+##
+## @brief      Class for strava club sensor.
+##
 class StravaClubSensor(StravaSensor):
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self     The object
+    ## @param      data     The data
+    ## @param      club_id  The club identifier
+    ## @param      field    The field
+    ##
     def __init__(self, data, club_id, field):
         super().__init__('club', field)
 
         self._data = data.get_club(club_id)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def _state(self):
         return self._data.club
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def entity_picture(self):
         if self.available:
             return self._state.profile_medium
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def device_state_attributes(self):
         return {
@@ -386,17 +601,42 @@ class StravaClubSensor(StravaSensor):
         }
 
 
+##
+## @brief      Class for strava gear sensor.
+##
 class StravaGearSensor(StravaSensor):
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self     The object
+    ## @param      data     The data
+    ## @param      gear_id  The gear identifier
+    ## @param      field    The field
+    ##
     def __init__(self, data, gear_id, field):
         super().__init__('gear', field)
 
         self._data = data.get_gear(gear_id)
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def _state(self):
         return self._data.gear
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @property
     def device_state_attributes(self):
         return {

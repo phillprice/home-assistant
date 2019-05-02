@@ -35,6 +35,14 @@ CONFIG_SCHEMA = vol.Schema({
 }, extra=vol.ALLOW_EXTRA)
 
 
+##
+## @brief      { function_description }
+##
+## @param      hass    The hass
+## @param      config  The configuration
+##
+## @return     { description_of_the_return_value }
+##
 async def async_setup(hass, config):
     data = StravaData(hass, config.get(DOMAIN))
 
@@ -47,8 +55,17 @@ async def async_setup(hass, config):
 
 
 class StravaData:
-    """A model which stores the Strava data."""
+    """
+    A model which stores the Strava data.
+    """
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self    The object
+    ## @param      hass    The hass
+    ## @param      config  The configuration
+    ##
     def __init__(self, hass, config):
         from stravalib.client import Client
 
@@ -69,12 +86,24 @@ class StravaData:
 
     @property
     def is_authorized(self):
-        """Check if there is a (possiblly expired) OAuth2 token."""
+        """
+        Check if there is a (possiblly expired) OAuth2 token.
+        
+        @param      self  The object
+        
+        @return     True if authorized, False otherwise.
+        """
         return self._token is not None
 
     @property
     def is_token_valid(self):
-        """Check if OAuth2 token is present and not expired."""
+        """
+        Check if OAuth2 token is present and not expired.
+        
+        @param      self  The object
+        
+        @return     True if token valid, False otherwise.
+        """
         if not self.is_authorized:
             _LOGGER.info("Not authorized")
             return False
@@ -87,7 +116,13 @@ class StravaData:
         return False
 
     async def get_token(self):
-        """Load the OAuth2 token from the store."""
+        """
+        Load the OAuth2 token from the store.
+        
+        @param      self  The object
+        
+        @return     The token.
+        """
         if not self.is_authorized:
             store = self._hass.helpers.storage.Store(STORAGE_VERSION,
                                                      STORAGE_KEY)
@@ -105,7 +140,15 @@ class StravaData:
             await self.refresh_token()
 
     async def authorize(self, code, hass):
-        """Request initial authorization."""
+        """
+        Request initial authorization.
+        
+        @param      self  The object
+        @param      code  The code
+        @param      hass  The hass
+        
+        @return     { description_of_the_return_value }
+        """
         self._token = await hass.async_add_executor_job(
             self.client.exchange_code_for_token,
             self._client_id,
@@ -126,7 +169,13 @@ class StravaData:
         await async_setup(hass, self._config)
 
     async def request_token(self):
-        """Request Strava access token."""
+        """
+        Request Strava access token.
+        
+        @param      self  The object
+        
+        @return     { description_of_the_return_value }
+        """
         callback_url = '{}{}'.format(self._hass.config.api.base_url,
                                      AUTH_CALLBACK_PATH)
         authorize_url = self.client.authorization_url(
@@ -142,7 +191,13 @@ class StravaData:
                 submit_caption=CONFIGURATOR_SUBMIT_CAPTION)
 
     async def refresh_token(self):
-        """Renew Strava access token."""
+        """
+        Renew Strava access token.
+        
+        @param      self  The object
+        
+        @return     { description_of_the_return_value }
+        """
         self._token = await self._hass.async_add_executor_job(
             self.client.refresh_access_token,
             self._client_id,
@@ -153,29 +208,60 @@ class StravaData:
         await store.async_save(self._token)
 
     def get_athlete(self, id):
-        """Get existing Athlete model or create if not existing."""
+        """
+        Get existing Athlete model or create if not existing.
+        
+        @param      self  The object
+        @param      id    The identifier
+        
+        @return     The athlete.
+        """
         if id not in self.athletes:
             self.athletes[id] = StravaAthleteData(self, id)
 
         return self.athletes[id]
 
     def get_gear(self, id):
-        """Get existing Gear model or create if not existing."""
+        """
+        Get existing Gear model or create if not existing.
+        
+        @param      self  The object
+        @param      id    The identifier
+        
+        @return     The gear.
+        """
         if id not in self.gears:
             self.gears[id] = StravaGearData(self, id)
 
         return self.gears[id]
 
     def get_club(self, id):
-        """Get existing Club model or create if not existing."""
+        """
+        Get existing Club model or create if not existing.
+        
+        @param      self  The object
+        @param      id    The identifier
+        
+        @return     The club.
+        """
         if id not in self.clubs:
             self.clubs[id] = StravaClubData(self, id)
 
         return self.clubs[id]
 
 
+##
+## @brief      Class for strava athlete data.
+##
 class StravaAthleteData:
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self  The object
+    ## @param      data  The data
+    ## @param      id    The identifier
+    ##
     def __init__(self, data, id=None):
         self.id = id
         self.data = data
@@ -184,7 +270,22 @@ class StravaAthleteData:
         self.stats = None
         self.last_activity = None
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ## @param      hass  The hass
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     async def update_last_actitivity(self, hass):
+        ##
+        ## @brief      Gets the last activity.
+        ##
+        ## @param      client  The client
+        ##
+        ## @return     The last activity.
+        ##
         def get_last_activity(client):
             activities = client.get_activities(limit=1)
             last = next(activities)
@@ -197,18 +298,42 @@ class StravaAthleteData:
 
         _LOGGER.info("Fetched last activity")
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ## @param      hass  The hass
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     async def update_details(self, hass):
         self.details = await hass.async_add_executor_job(
             self.data.client.get_athlete, self.id)
 
         _LOGGER.info("Fetched athlete details")
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ## @param      hass  The hass
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     async def update_stats(self, hass):
         self.stats = await hass.async_add_executor_job(
             self.data.client.get_athlete_stats, self.id)
 
         _LOGGER.info("Fetched athlete stats")
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ## @param      hass  The hass
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update(self, hass):
         import asyncio
@@ -223,14 +348,32 @@ class StravaAthleteData:
         )
 
 
+##
+## @brief      Class for strava club data.
+##
 class StravaClubData:
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self  The object
+    ## @param      data  The data
+    ## @param      id    The identifier
+    ##
     def __init__(self, data, id):
         self.id = id
         self.data = data
 
         self.club = None
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ## @param      hass  The hass
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update(self, hass):
         await self.data.get_token()
@@ -238,14 +381,32 @@ class StravaClubData:
             self.data.client.get_club, self.id)
 
 
+##
+## @brief      Class for strava gear data.
+##
 class StravaGearData:
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self  The object
+    ## @param      data  The data
+    ## @param      id    The identifier
+    ##
     def __init__(self, data, id):
         self.id = id
         self.data = data
 
         self.gear = None
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self  The object
+    ## @param      hass  The hass
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update(self, hass):
         await self.data.get_token()
@@ -254,15 +415,31 @@ class StravaGearData:
 
 
 class StravaAuthCallbackView(HomeAssistantView):
-    """Strava Authorization Callback View."""
+    """
+    Strava Authorization Callback View.
+    """
 
     requires_auth = False
     url = AUTH_CALLBACK_PATH
     name = AUTH_CALLBACK_NAME
 
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      self  The object
+    ## @param      data  The data
+    ##
     def __init__(self, data):
         self._data = data
 
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      self     The object
+    ## @param      request  The request
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     async def get(self, request):
         hass = request.app['hass']
         code = request.query['code']
